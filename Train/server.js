@@ -44,9 +44,9 @@ function bySeat(array) {
         // })
         // start = i;
       }
-      if (newArr.length>0) {
+      if (newArr.length > 0) {
         // end = i + 1;
-        newArr.push(array[i+1])
+        newArr.push(array[i + 1])
       }
     }
 
@@ -61,7 +61,7 @@ function bySeat(array) {
     //     right.push(array[start]);
     //   }
     // }
-    for (var i=0; i < newArr.length+1; i++) {
+    for (var i = 0; i < newArr.length + 1; i++) {
       if (array[i].price.sleeper < pivot.price.sleeper) {
         left.push(array[start]);
       } else {
@@ -84,29 +84,29 @@ app.post('/register', (req, res) => {
 
   axios({
     method: 'POST',
-    url: '/register', 
+    url: '/register',
     data: req.body,
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
       'Authorization': 'Bearer ' + accessToken
     },
   })
-  .then(function (response) {
+    .then(function (response) {
 
-    console.log("Register", response);
-    res.status(200).send({
-      message: response.data
+      console.log("Register", response);
+      res.status(200).send({
+        message: response.data
+      });
+
+    })
+    .catch(function (error) {
+
+      console.log("Error", error.response.data);
+      res.status(error.response.status).send({
+        message: error.response.data
+      });
+
     });
-
-  })
-  .catch(function (error) {
-
-    console.log("Error", error.response.data);
-    res.status(error.response.status).send({
-      message: error.response.data
-    });
-
-  });
 })
 
 
@@ -148,34 +148,43 @@ app.post('/auth', (req, res) => {
 
 app.get('/train', (req, res) => {
   console.log(res.body)
+  var train = []
 
-  axios.defaults.baseURL = 'http://localhost:8069';
+  const cachedData = cache.get(cacheKey);
+  if (cachedData !== undefined) {
+    train = cachedData
+    return res.json(train);s
+  }
+  else {
 
-  axios({
-    method: 'GET',
-    url: '/train',
-    data: {},
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + accessToken
-    },
-  })
-    .then(function (response) {
-      const array = response;
-      
-      var sortedArray = byPrice(array);
-      // console.log("SEAT", bySeat(sortedArray));
-      var resArray = bySeat(sortedArray)
-      res.send(resArray)
+    axios.defaults.baseURL = 'http://localhost:8069';
+
+    axios({
+      method: 'GET',
+      url: '/train',
+      data: {},
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + accessToken
+      },
     })
-    .catch(function (error) {
+      .then(function (response) {
+        const array = response;
 
-      console.log("Error", error.response.data);
-      res.status(error.response.status).send({
-        message: error.response.data
+        var sortedArray = byPrice(array);
+        // console.log("SEAT", bySeat(sortedArray));
+        var train = bySeat(sortedArray)
+        res.send(train)
+      })
+      .catch(function (error) {
+
+        console.log("Error", error.response.data);
+        res.status(error.response.status).send({
+          message: error.response.data
+        });
+
       });
-
-    });
+  }
 })
 
 app.post('/train/:trainNumber', (req, res) => {
@@ -212,58 +221,6 @@ app.post('/train/:trainNumber', (req, res) => {
 
   // });
 })
-
-
-
-app.get('/primes', (req, res) => {
-  console.log("prime")
-  res.send([2, 3, 5, 7, 11, 13])
-})
-
-app.get('/fibo', (req, res) => {
-  res.send([1, 1, 2, 3, 5, 8, 13, 21])
-})
-
-app.get('/odd', (req, res) => {
-  res.send([1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23])
-})
-
-app.get('/rand', (req, res) => {
-  res.send([5, 17, 3, 19, 76, 24, 1, 5, 10, 34, 8, 27, 7])
-})
-
-// Define API route
-app.get('/my-route', (req, res) => {
-  const cacheKey = 'my-cache-key';
-
-  var train = []
-  // Check if data is in cache
-  const cachedData = cache.get(cacheKey);
-  if (cachedData !== undefined) {
-    // Data is in cache, return it
-    train = cachedData
-    return res.json(cachedData);
-  }
-  else {
-    axios.get('https://some-api.com/data')
-      .then(response => {
-        // Cache data for future use
-        cache.set(cacheKey, response.data, 60); // Cache for 60 seconds
-
-        // Return response data to client
-        train = response.data
-        //res.json(response.data);
-
-      })
-      .catch(error => {
-        console.error(error);
-        res.status(500).json({ error: 'Failed to fetch data' });
-      });
-  }
-
-  // Data is not in cache, make API call
-
-});
 
 
 
